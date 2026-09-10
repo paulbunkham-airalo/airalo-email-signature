@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Airalo Email Signature Generator</title>
+  <style>
+    :root {
+      --airalo-coral: #B44F40;
+      --airalo-purple: #B24D78;
+      --airalo-text: #4A4A4C;
+      --airalo-offwhite: #F3F0EC;
+      --panel-border: #ddd8d3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 32px;
+      background: var(--airalo-offwhite);
+      color: var(--airalo-text);
+      font-family: "Source Sans 3", "Source Sans Pro", Arial, Helvetica, sans-serif;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.15;
+    }
+
+    .intro {
+      margin: 0 0 24px;
+      max-width: 760px;
+      line-height: 1.5;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 340px) minmax(520px, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 14px;
+      font-weight: 600;
+    }
+
+    input, textarea {
+      display: block;
+      width: 100%;
+      margin-top: 6px;
+      border: 1px solid #cfc9c4;
+      border-radius: 7px;
+      padding: 9px 10px;
+      font: inherit;
+      color: var(--airalo-text);
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    .hint {
+      margin-top: -6px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #747477;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 8px;
+      background: var(--airalo-coral);
+      color: #fff;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover { filter: brightness(.96); }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 14px;
+    }
+
+    #open-separately {
+      font-size: 13px;
+      color: var(--airalo-text);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .copy-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 40px;
+    }
+
+    #copy-status {
+      font-size: 13px;
+      color: #666;
+      opacity: 0;
+      transition: opacity 160ms ease;
+      white-space: nowrap;
+    }
+
+    #copy-status.visible {
+      opacity: 1;
+    }
+
+    .preview-shell {
+      overflow-x: auto;
+    }
+
+    .preview-label {
+      margin: 0 0 16px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+      body { padding: 16px; }
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+        <div class="top-actions">
+          <a id="open-separately" href="#" target="_blank" rel="noopener">
+            Open separately&nbsp;↗
+          </a>
+        </div>
+
+<div class="layout">
+      <section class="panel">
+        <label>
+          Name
+          <input id="name" placeholder="Your name" autocomplete="name">
+        </label>
+
+        <label>
+          Job title
+          <input id="title" placeholder="Your job title">
+        </label>
+
+        <label>
+          Email
+          <input id="email" type="email" placeholder="your.name@airalo.com" autocomplete="email">
+        </label>
+
+        <label>
+          Quote
+          <textarea id="quote" placeholder="Enter the quote without quotation marks"></textarea>
+        </label>
+        <p class="hint">
+          Curly opening and closing quotation marks are added automatically.
+        </p>
+
+        <div class="copy-actions">
+          <button id="copy" type="button">Copy signature</button>
+          <span id="copy-status" aria-live="polite"></span>
+        </div>
+      </section>
+
+      <section class="panel preview-shell">
+        <p class="preview-label">Preview</p>
+        <div id="signature"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const BRAND = {
+      text: '#4A4A4C',
+      accent: '#B44F40',
+      logo: 'https://d36urhup7zbd7q.cloudfront.net/5923c340-8a83-4ca9-a6c9-b1cd84e2f56c/airalohorizontaltransparent.format_png.resize_200x.png',
+      facebookIcon: 'https://cdn.gifo.wisestamp.com/social/facebook/B44F40/16/4.png',
+      instagramIcon: 'https://cdn.gifo.wisestamp.com/social/instagram/B44F40/16/4.png',
+      linkedinIcon: 'https://cdn.gifo.wisestamp.com/social/linkedin/B44F40/16/4.png'
+    };
+
+    const DISCLAIMER_1 =
+      'The contents of this email together with its attachments are intended for the individual addressee(s) above. ' +
+      'If you received this message by mistake, please notify the sender and delete this immediately. ' +
+      'You should not forward, copy, print, or disclose any part of this message.';
+
+    const DISCLAIMER_2 =
+      'If you are the recipient, please scan the contents with proper security software. ' +
+      'AirGSM Holdings, Inc. is not held liable for any damages that may result from receiving this message. ' +
+      'The sender’s message, views, opinions, and feedback do not immediately reflect the same as the company’s position on the issue. ' +
+      'This message cannot be concluded as a binding contract without the explicit written consent of higher management and/or authorized signatories.';
+
+    const FONT_STACK = '"Source Sans 3","Source Sans Pro",Arial,Helvetica,sans-serif';
+
+    const fields = {
+      name: document.querySelector('#name'),
+      title: document.querySelector('#title'),
+      email: document.querySelector('#email'),
+      quote: document.querySelector('#quote')
+    };
+
+    const signature = document.querySelector('#signature');
+
+    function td(styles = '') {
+      const el = document.createElement('td');
+      el.setAttribute('style', styles);
+      return el;
+    }
+
+    function table(styles = '') {
+      const el = document.createElement('table');
+      el.setAttribute('role', 'presentation');
+      el.setAttribute('border', '0');
+      el.setAttribute('cellpadding', '0');
+      el.setAttribute('cellspacing', '0');
+      el.setAttribute('style', styles);
+      return el;
+    }
+
+    function addText(el, text) {
+      el.appendChild(document.createTextNode(text));
+    }
+
+    function makeSocialLink(href, src, alt) {
+      const cell = td('padding:0 8px 0 0;vertical-align:middle;');
+      const link = document.createElement('a');
+      link.href = href;
+      link.target = '_blank';
+      link.setAttribute('style', 'text-decoration:none;');
+
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = alt;
+      img.width = 16;
+      img.height = 16;
+      img.setAttribute('style', 'display:block;border:0;width:16px;height:16px;');
+
+      link.appendChild(img);
+      cell.appendChild(link);
+      return cell;
+    }
+
+    function renderSignature() {
+      const name = fields.name.value.trim();
+      const title = fields.title.value.trim();
+      const email = fields.email.value.trim();
+      const quote = fields.quote.value.trim();
+
+      signature.replaceChildren();
+
+      const wrapper = document.createElement('div');
+      wrapper.setAttribute(
+        'style',
+        `font-family:${FONT_STACK};color:${BRAND.text};font-size:12px;line-height:16px;`
+      );
+
+      const main = table(
+        `width:480px;max-width:480px;border-collapse:collapse;font-family:${FONT_STACK};color:${BRAND.text};font-size:12px;line-height:16px;`
+      );
+      main.setAttribute('width', '480');
+
+      const mainRow = document.createElement('tr');
+
+      const logoCell = td('width:65px;padding:0 12px 0 0;vertical-align:top;');
+      logoCell.setAttribute('width', '65');
+      logoCell.setAttribute('valign', 'top');
+
+      const logo = document.createElement('img');
+      logo.src = BRAND.logo;
+      logo.alt = 'Airalo';
+      logo.width = 65;
+      logo.height = 65;
+      logo.setAttribute('style', 'display:block;border:0;width:65px;height:65px;');
+      logoCell.appendChild(logo);
+
+      const contentCell = td('vertical-align:top;');
+      contentCell.setAttribute('valign', 'top');
+
+      const details = table(
+        `width:100%;border-collapse:collapse;font-family:${FONT_STACK};color:${BRAND.text};font-size:12px;line-height:16px;`
+      );
+      details.setAttribute('width', '100%');
+
+      // Name + title
+      {
+        const row = document.createElement('tr');
+        const cell = td('padding:0 0 6px 2px;');
+
+        const nameDiv = document.createElement('div');
+        nameDiv.setAttribute('style', `font-size:14px;line-height:18px;font-weight:700;color:${BRAND.accent};`);
+        addText(nameDiv, name || 'Name');
+
+        const titleDiv = document.createElement('div');
+        titleDiv.setAttribute('style', `font-size:12px;line-height:16px;font-weight:400;color:${BRAND.text};`);
+        addText(titleDiv, title || 'Job title');
+
+        cell.append(nameDiv, titleDiv);
+        row.appendChild(cell);
+        details.appendChild(row);
+      }
+
+      // Divider
+      {
+        const row = document.createElement('tr');
+        const cell = td(
+          `border-top:1px solid ${BRAND.accent};height:1px;font-size:0;line-height:0;padding:0;`
+        );
+        cell.innerHTML = '&nbsp;';
+        row.appendChild(cell);
+        details.appendChild(row);
+      }
+
+      // Optional quote
+      if (quote) {
+        const row = document.createElement('tr');
+        const cell = td(
+          `padding:10px 0 10px 2px;font-size:12px;line-height:17px;font-weight:400;color:${BRAND.text};`
+        );
+        addText(cell, `“${quote}”`);
+        row.appendChild(cell);
+        details.appendChild(row);
+      }
+
+      // Contact details
+      {
+        const row = document.createElement('tr');
+        const cell = td(quote ? 'padding:0 0 0 2px;' : 'padding:10px 0 0 2px;');
+
+        const contact = table(
+          `border-collapse:collapse;font-family:${FONT_STACK};color:${BRAND.text};font-size:12px;line-height:17px;`
+        );
+
+        const emailRow = document.createElement('tr');
+        const emailCell = td('padding:0 0 1px 0;');
+        const emailLabel = document.createElement('span');
+        emailLabel.setAttribute('style', `font-weight:700;color:${BRAND.accent};`);
+        addText(emailLabel, 'E\u00A0 ');
+        emailCell.appendChild(emailLabel);
+
+        const emailLink = document.createElement('a');
+        emailLink.href = `mailto:${email}`;
+        emailLink.setAttribute('style', `color:${BRAND.text};text-decoration:underline;`);
+        addText(emailLink, email || 'name@airalo.com');
+        emailCell.appendChild(emailLink);
+        emailRow.appendChild(emailCell);
+
+        const webRow = document.createElement('tr');
+        const webCell = td('padding:0;');
+        const webLabel = document.createElement('span');
+        webLabel.setAttribute('style', `font-weight:700;color:${BRAND.accent};`);
+        addText(webLabel, 'W\u00A0');
+        webCell.appendChild(webLabel);
+
+        const webLink = document.createElement('a');
+        webLink.href = 'https://airalo.com/';
+        webLink.target = '_blank';
+        webLink.setAttribute('style', `color:${BRAND.text};text-decoration:underline;`);
+        addText(webLink, 'airalo.com');
+        webCell.appendChild(webLink);
+        webRow.appendChild(webCell);
+
+        contact.append(emailRow, webRow);
+        cell.appendChild(contact);
+        row.appendChild(cell);
+        details.appendChild(row);
+      }
+
+      // Social icons
+      {
+        const row = document.createElement('tr');
+        const cell = td('padding:10px 0 0 2px;');
+        const socials = table('border-collapse:collapse;');
+        const socialsRow = document.createElement('tr');
+
+        socialsRow.append(
+          makeSocialLink('https://www.facebook.com/airalocom/', BRAND.facebookIcon, 'Facebook'),
+          makeSocialLink('https://www.instagram.com/airalocom', BRAND.instagramIcon, 'Instagram'),
+          makeSocialLink('https://www.linkedin.com/company/airalocom/', BRAND.linkedinIcon, 'LinkedIn')
+        );
+
+        socials.appendChild(socialsRow);
+        cell.appendChild(socials);
+        row.appendChild(cell);
+        details.appendChild(row);
+      }
+
+      contentCell.appendChild(details);
+      mainRow.append(logoCell, contentCell);
+      main.appendChild(mainRow);
+      wrapper.appendChild(main);
+
+      // Disclaimer
+      // Keep this outside the fixed-width signature table and leave it unconstrained
+      // so mail clients can let the legal text flow across the available message width.
+      const disclaimer1 = document.createElement('div');
+      disclaimer1.setAttribute(
+        'style',
+        `margin-top:14px;font-family:${FONT_STACK};color:#999999;font-size:10px;line-height:15px;`
+      );
+      addText(disclaimer1, DISCLAIMER_1);
+
+      const disclaimer2 = document.createElement('div');
+      disclaimer2.setAttribute(
+        'style',
+        `margin-top:16px;font-family:${FONT_STACK};color:#999999;font-size:10px;line-height:15px;`
+      );
+      addText(disclaimer2, DISCLAIMER_2);
+
+      wrapper.append(disclaimer1, disclaimer2);
+
+      signature.appendChild(wrapper);
+    }
+
+    let copyStatusTimer;
+
+    function showCopyStatus(message, duration = 1800) {
+      const status = document.querySelector('#copy-status');
+      status.textContent = message;
+      status.classList.add('visible');
+
+      window.clearTimeout(copyStatusTimer);
+      copyStatusTimer = window.setTimeout(() => {
+        status.classList.remove('visible');
+      }, duration);
+    }
+
+    function legacyCopySignature() {
+      const selection = window.getSelection();
+      const previousRanges = [];
+
+      for (let i = 0; i < selection.rangeCount; i++) {
+        previousRanges.push(selection.getRangeAt(i).cloneRange());
+      }
+
+      const range = document.createRange();
+      range.selectNodeContents(signature);
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      let copied = false;
+      try {
+        copied = document.execCommand('copy');
+      } finally {
+        selection.removeAllRanges();
+        previousRanges.forEach(previousRange => selection.addRange(previousRange));
+      }
+
+      return copied;
+    }
+
+    async function copySignature() {
+      const html = signature.innerHTML;
+      const plainText = signature.innerText;
+
+      try {
+        if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
+          throw new Error('Async Clipboard API is unavailable');
+        }
+
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': new Blob([html], { type: 'text/html' }),
+            'text/plain': new Blob([plainText], { type: 'text/plain' })
+          })
+        ]);
+
+        showCopyStatus('Copied');
+        return;
+      } catch (err) {
+        console.warn('Clipboard API unavailable or blocked; trying selection copy.', err);
+      }
+
+      if (legacyCopySignature()) {
+        showCopyStatus('Copied');
+      } else {
+        status.textContent = 'Copy is blocked here — open separately, or select the preview and copy it manually.';
+      }
+    }
+
+    Object.values(fields).forEach(field => field.addEventListener('input', renderSignature));
+    document.querySelector('#copy').addEventListener('click', copySignature);
+    document.querySelector('#open-separately').href = window.location.href;
+
+    renderSignature();
+  </script>
+</body>
+</html>
