@@ -497,7 +497,6 @@
 
     Object.values(fields).forEach(field => field.addEventListener('input', renderSignature));
     document.querySelector('#copy').addEventListener('click', copySignature);
-    document.querySelector('#open-separately').href = window.location.href;
 
     renderSignature();
   </script>
