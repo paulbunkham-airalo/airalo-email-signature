@@ -194,7 +194,9 @@
       logo: 'https://d36urhup7zbd7q.cloudfront.net/5923c340-8a83-4ca9-a6c9-b1cd84e2f56c/airalohorizontaltransparent.format_png.resize_200x.png',
       facebookIcon: 'https://cdn.gifo.wisestamp.com/social/facebook/B44F40/16/4.png',
       instagramIcon: 'https://cdn.gifo.wisestamp.com/social/instagram/B44F40/16/4.png',
-      linkedinIcon: 'https://cdn.gifo.wisestamp.com/social/linkedin/B44F40/16/4.png'
+      linkedinIcon: 'https://cdn.gifo.wisestamp.com/social/linkedin/B44F40/16/4.png',
+      tiktokIcon: 'https://cdn.gifo.wisestamp.com/social/tiktok/B44F40/16/4.png',
+      youtubeIcon: 'https://cdn.gifo.wisestamp.com/social/youtube/B44F40/16/4.png'
     };
 
     const DISCLAIMER_1 =
@@ -244,6 +246,9 @@
       const link = document.createElement('a');
       link.href = href;
       link.target = '_blank';
+      // prevent potential window.opener abuse and provide a tooltip
+      link.rel = 'noopener noreferrer';
+      link.title = alt;
       link.setAttribute('style', 'text-decoration:none;');
 
       const img = document.createElement('img');
@@ -391,9 +396,11 @@
         const socialsRow = document.createElement('tr');
 
         socialsRow.append(
-          makeSocialLink('https://www.facebook.com/airalocom/', BRAND.facebookIcon, 'Facebook'),
           makeSocialLink('https://www.instagram.com/airalo', BRAND.instagramIcon, 'Instagram'),
-          makeSocialLink('https://www.linkedin.com/company/airalocom/', BRAND.linkedinIcon, 'LinkedIn')
+          makeSocialLink('https://www.tiktok.com/@airalocom', BRAND.tiktokIcon, 'TikTok'),
+          makeSocialLink('https://www.youtube.com/@airalocom', BRAND.youtubeIcon, 'YouTube'),
+          makeSocialLink('https://www.linkedin.com/company/airalocom/', BRAND.linkedinIcon, 'LinkedIn'),
+          makeSocialLink('https://www.facebook.com/airalocom/', BRAND.facebookIcon, 'Facebook')
         );
 
         socials.appendChild(socialsRow);
